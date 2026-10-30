@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>피복 신청 목록 · 영종 의용소방대</title>
+<meta name="description" content="영종 의용소방대 피복 신청 목록. 이름은 첫 글자만 표시합니다.">
+<style>
+:root{--line:#e1e7ed}*{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#142c47;font:16px/1.6 'Malgun Gothic',sans-serif}header{background:#142c47;color:white;padding:18px 24px}header div,main{max-width:760px;margin:auto}main{padding:28px 18px 48px}h1{font-size:30px;margin:10px 0}p{margin:8px 0 18px}.small{font-size:13px;color:#64748b}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:22px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}a,button{display:inline-block;font:inherit;padding:12px 18px;border-radius:9px;border:1px solid #d2dbe6;text-decoration:none;cursor:pointer;background:white;color:#142c47}a.primary{background:#142c47;color:white;border-color:#142c47}button:disabled{opacity:.5;cursor:wait}:focus-visible{outline:3px solid #e87632;outline-offset:3px}ul{list-style:none;padding:0;margin:0}li:last-child{border-bottom:0!important}footer{margin-top:24px;font-size:12px;color:#64748b}
+</style></head><body><header><div><b>영종 의용소방대</b></div></header>
+<main><div class="small">UNIFORM APPLICATIONS</div><h1>피복 신청 목록</h1>
+<p>이메일 전송 요청이 접수된 신청 내역입니다.</p>
+<div class="actions"><a class="primary" href="./index.html">피복 신청하기</a><button type="button" id="refresh-history">목록 새로고침</button></div>
+<section class="panel" aria-label="피복 신청 내역"><p class="small">이름은 김** · 이** · 박**처럼 표시합니다. 소속 대대와 신청 시각은 한국시간 기준으로 초 단위까지 표시하며, 최근 100건을 보여줍니다.</p>
+<p id="history-status" class="small" role="status" aria-live="polite">목록을 불러오는 중입니다.</p><ul id="application-history"></ul></section>
+<p class="small" style="margin-top:16px">전송 서비스의 접수 성공을 확인한 목록입니다. 실제 이메일 도착 여부는 담당자 수신함에서 확인할 수 있습니다.</p>
+<footer>영종 의용소방대 · 담당 소방교 김승회</footer></main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uniformApi='https://rebjcoazabhkcobjjzkj.supabase.co/rest/v1/rpc/';
+const uniformKey='sb_publishable_56dLyg6nM0RWsDsHy08kPA_cMQHPt1J';
+async function uniformRpc(method,body={}){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+ try{
+  const response=await fetch(uniformApi+method,{method:'POST',headers:{apikey:uniformKey,'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
+  if(!response.ok)throw new Error('현황 연결 실패');
+  return await response.json();
+ }finally{clearTimeout(timer);}
+}
+
+let historyLoading=false;
+async function loadApplicationHistory(){
+ if(historyLoading)return;
+ historyLoading=true;$('refresh-history').disabled=true;
+ $('history-status').textContent='내역을 불러오는 중입니다.';
+ try{
+  const rows=await uniformRpc('list_uniform_applications');
+  if(!Array.isArray(rows))throw new Error('잘못된 응답');
+  $('application-history').innerHTML=rows.map(row=>{
+   const initial=Array.from(String(row.name_initial||''))[0]||'*';
+   const date=new Date(row.submitted_at);
+   const time=Number.isNaN(date.getTime())?'시각 확인 불가':date.toLocaleString('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+   return '<li style="padding:12px 0;border-bottom:1px solid var(--line)"><b>'+esc(initial)+'**</b> · '+esc(row.team)+'<br><span class="small">'+esc(time)+' (한국시간)</span></li>';
+  }).join('');
+  $('history-status').textContent=rows.length?'최근 전송 요청 '+rows.length+'건':'아직 전송 요청 내역이 없습니다.';
+ }catch{
+  $('history-status').textContent='현황을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해주세요.';
+ }finally{historyLoading=false;$('refresh-history').disabled=false;}
+}
+
+$('refresh-history').addEventListener('click',loadApplicationHistory);
+window.addEventListener('pageshow',loadApplicationHistory);
+loadApplicationHistory();
+</script></body></html>
