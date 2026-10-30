@@ -117,7 +117,7 @@ $('send-final').addEventListener('click',async()=>{
   emailAttempt={signature,id:crypto.randomUUID(),initial:Array.from($('name').value.trim())[0],team:$('unit').value,emailAccepted:false,recorded:false};
  }
  const attempt=emailAttempt;
- if(attempt.recorded){$('send-status').textContent='이미 접수된 동일한 신청입니다.';syncSendButton();return;}
+ if(attempt.recorded){location.assign('./applications.html?result=success');return;}
  sending=true;$('send-final').disabled=true;$('close').disabled=true;
  try{
   if(!attempt.emailAccepted){
@@ -132,11 +132,11 @@ $('send-final').addEventListener('click',async()=>{
     data=await response.json();
    }catch{
     $('send-status').textContent='전송 결과를 확인하지 못했습니다. 목록에는 추가하지 않았습니다. 수신 여부를 담당자에게 확인한 뒤 재시도해주세요. 재시도 시 이메일이 중복될 수 있습니다.';
-    return;
+    location.assign('./applications.html?result=unknown');return;
    }finally{clearTimeout(timer);}
    if(!response.ok||!data||!(data.success===true||data.success==='true')){
     $('send-status').textContent='이메일 전송 요청이 접수되지 않았습니다. 목록에는 추가하지 않았습니다. '+String(data?.message||'잠시 후 다시 시도해주세요.').slice(0,300);
-    return;
+    location.assign('./applications.html?result=failed');return;
    }
    attempt.emailAccepted=true;
   }
@@ -144,11 +144,11 @@ $('send-final').addEventListener('click',async()=>{
   try{await recordApplicationRequest(attempt);}
   catch{
    $('send-status').textContent='이메일 전송 요청은 접수됐지만 목록 저장에 실패했습니다. 아래 버튼으로 목록만 다시 저장하세요. 이메일은 재전송하지 않습니다.';
-   return;
+   location.assign('./applications.html?result=record-failed');return;
   }
   attempt.recorded=true;
   $('send-status').textContent='이메일 전송 요청이 접수됐고 목록에도 저장했습니다. 실제 메일 도착 여부는 담당자 수신함에서 확인할 수 있습니다.';
-  location.assign('./applications.html');
+  location.assign('./applications.html?result=success');
  }finally{
   sending=false;$('close').disabled=false;syncSendButton();
  }
