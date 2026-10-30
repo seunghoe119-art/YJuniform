@@ -5,7 +5,7 @@
 <style>
 :root{--line:#e1e7ed}*{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#142c47;font:16px/1.6 'Malgun Gothic',sans-serif}header{background:#142c47;color:white;padding:18px 24px}header div,main{max-width:760px;margin:auto}main{padding:28px 18px 48px}h1{font-size:30px;margin:10px 0}p{margin:8px 0 18px}.small{font-size:13px;color:#64748b}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:22px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}a,button{display:inline-block;font:inherit;padding:12px 18px;border-radius:9px;border:1px solid #d2dbe6;text-decoration:none;cursor:pointer;background:white;color:#142c47}a.primary{background:#142c47;color:white;border-color:#142c47}button:disabled{opacity:.5;cursor:wait}:focus-visible{outline:3px solid #e87632;outline-offset:3px}ul{list-style:none;padding:0;margin:0}li:last-child{border-bottom:0!important}footer{margin-top:24px;font-size:12px;color:#64748b}
 </style></head><body><header><div><b>영종 의용소방대</b></div></header>
-<main><div class="small">UNIFORM APPLICATIONS</div><h1>피복 신청 목록</h1>
+<main><div class="small">UNIFORM APPLICATIONS</div><h1>피복 신청 목록</h1><div id="submission-result" class="panel" role="status" hidden style="margin:16px 0"></div>
 <p>이메일 전송 요청이 접수된 신청 내역입니다.</p>
 <div class="actions"><a class="primary" href="./index.html">피복 신청하기</a><button type="button" id="refresh-history">목록 새로고침</button></div>
 <section class="panel" aria-label="피복 신청 내역"><p class="small">이름은 김** · 이** · 박**처럼 표시합니다. 소속 대대와 신청 시각은 한국시간 기준으로 초 단위까지 표시하며, 최근 100건을 보여줍니다.</p>
@@ -14,6 +14,15 @@
 <footer>영종 의용소방대 · 담당 소방교 김승회</footer></main>
 <script>
 const $=id=>document.getElementById(id);
+const result=new URLSearchParams(location.search).get('result');
+const resultMessages={
+ success:'이메일 전송 요청이 접수됐습니다. 아래 신청 목록을 확인해주세요.',
+ failed:'이메일 전송 요청이 접수되지 않았습니다. 신청 목록에는 추가하지 않았습니다. 뒤로 돌아가 전송 안내를 확인해주세요.',
+ unknown:'이메일 전송 결과를 확인하지 못했습니다. 목록에는 추가하지 않았습니다. 담당자에게 수신 여부를 확인해주세요.',
+ 'record-failed':'이메일 전송 요청은 접수됐지만 목록 저장에 실패했습니다. 뒤로 돌아가 목록 저장만 다시 시도해주세요.'
+};
+if(resultMessages[result]){$('submission-result').hidden=false;$('submission-result').textContent=resultMessages[result];}
+
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uniformApi='https://rebjcoazabhkcobjjzkj.supabase.co/rest/v1/rpc/';
 const uniformKey='sb_publishable_56dLyg6nM0RWsDsHy08kPA_cMQHPt1J';
